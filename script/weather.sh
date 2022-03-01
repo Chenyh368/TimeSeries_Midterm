@@ -19,7 +19,9 @@ python -u autoformer_run.py \
   --dec_in 21 \
   --c_out 21 \
   --des 'Exp' \
-  --itr 1 \
+  --exp_id 0 \
+  --train_split 0.7 \
+  --test_split 0.2 \
   --train_epochs 2
 
 #python -u run.py \

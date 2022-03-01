@@ -14,7 +14,8 @@ warnings.filterwarnings('ignore')
 class DatasetCustom(Dataset):
     def __init__(self, root_path, flag='train', size=None,
                  features='S', data_path='weather.csv',
-                 target='OT', scale=True, timeenc=0, freq='h'):
+                 target='OT', scale=True, timeenc=0, freq='h', split = (0.5, 0.49)):
+        # modified split
         # size : [seq_len, label_len, pred_len]
         # info
         if size == None:
@@ -27,14 +28,17 @@ class DatasetCustom(Dataset):
             self.pred_len = size[2]
 
         # init
-        assert flag in ['train', 'test', 'val']
-        type_map = {'train': 0, 'val': 1, 'test': 2}
+        assert flag in ['train', 'test', 'val', 'all']
+        type_map = {'train': 0, 'val': 1, 'test': 2, 'all': 3}
         self.set_type = type_map[flag]
         self.features = features
         self.target = target
         self.scale = scale
         self.timeenc = timeenc
         self.freq = freq
+
+        self.train_split = split[0]
+        self.test_split = split[1]
 
         self.root_path = root_path
         self.data_path = data_path
@@ -56,11 +60,11 @@ class DatasetCustom(Dataset):
         cols.remove(self.target)
         cols.remove('date')
         df_raw = df_raw[['date'] + cols + [self.target]]
-        num_train = int(len(df_raw) * 0.7)
-        num_test = int(len(df_raw) * 0.2)
+        num_train = int(len(df_raw) * self.train_split)
+        num_test = int(len(df_raw) * self.test_split)
         num_vali = len(df_raw) - num_train - num_test
-        border1s = [0, num_train - self.seq_len, len(df_raw) - num_test - self.seq_len]
-        border2s = [num_train, num_train + num_vali, len(df_raw)]
+        border1s = [0, num_train - self.seq_len, len(df_raw) - num_test - self.seq_len, 0]
+        border2s = [num_train, num_train + num_vali, len(df_raw), len(df_raw)]
         border1 = border1s[self.set_type]
         border2 = border2s[self.set_type]
 
@@ -121,7 +125,7 @@ class DatasetCustom(Dataset):
 class DatasetPred(Dataset):
     def __init__(self, root_path, flag='pred', size=None,
                  features='S', data_path='weather.csv',
-                 target='OT', scale=True, inverse=False, timeenc=0, freq='15min', cols=None):
+                 target='OT', scale=True, inverse=False, timeenc=0, freq='15min', cols=None, split=None):
         # size [seq_len, label_len, pred_len]
         if size == None:
             self.seq_len = 24 * 4 * 4
@@ -231,6 +235,7 @@ def data_provider(args, flag):
     Data = data_dict[args.data]
     timeenc = 0 if args.embed != 'timeF' else 1
 
+    split = (args.train_split, args.test_split)
     if flag == 'test':
         shuffle_flag = False
         drop_last = True
@@ -256,7 +261,8 @@ def data_provider(args, flag):
         features=args.features,
         target=args.target,
         timeenc=timeenc,
-        freq=freq
+        freq=freq,
+        split=split
     )
     print(flag, len(data_set))
     data_loader = DataLoader(

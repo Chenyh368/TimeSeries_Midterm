@@ -350,3 +350,5 @@ class ExpMain(ExpBasic):
 
         return
 
+    def test_all(self, setting, test=0):
+        pass

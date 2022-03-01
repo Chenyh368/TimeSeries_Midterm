@@ -12,8 +12,6 @@ np.random.seed(fix_seed)
 
 parser = argparse.ArgumentParser(description='Autoformer & Transformer family for Time Series Forecasting')
 
-#======================== Weather Predict Default ===================
-
 #======================= Basic Config ========================
 parser.add_argument('--is_training', type=int, required=True, default=1, help='status')
 parser.add_argument('--model_id', type=str, required=True, default='weather_96_96', help='model id')
@@ -22,6 +20,8 @@ parser.add_argument('--model', type=str, required=True, default='Autoformer',
 
 #======================= DataLoader ========================
 parser.add_argument('--data', type=str, required=True, default='custom', help='dataset type')
+parser.add_argument('--train_split', type=float, default=0.5)
+parser.add_argument('--test_split', type=float, default=0.49)
 parser.add_argument('--root_path', type=str, default='~/data/informer_dataset/weather', help='root path of the data file')
 parser.add_argument('--data_path', type=str, default='weather.csv', help='data file')
 parser.add_argument('--features', type=str, default='M',
@@ -59,7 +59,7 @@ parser.add_argument('--do_predict', action='store_true', help='whether to predic
 
 #======================= Optimization ========================
 parser.add_argument('--num_workers', type=int, default=10, help='data loader num workers')
-parser.add_argument('--itr', type=int, default=1, help='experiments times')
+parser.add_argument('--exp_id', type=int, default=0, help='experiment id')
 parser.add_argument('--train_epochs', type=int, default=2, help='train epochs')
 parser.add_argument('--batch_size', type=int, default=32, help='batch size of train input data')
 parser.add_argument('--patience', type=int, default=3, help='early stopping patience')
@@ -89,37 +89,37 @@ print(args)
 Exp = ExpMain
 
 if args.is_training:
-    for ii in range(args.itr):
-        # setting record of experiments
-        setting = '{}_{}_{}_ft{}_sl{}_ll{}_pl{}_dm{}_nh{}_el{}_dl{}_df{}_fc{}_eb{}_dt{}_{}_{}'.format(
-            args.model_id,
-            args.model,
-            args.data,
-            args.features,
-            args.seq_len,
-            args.label_len,
-            args.pred_len,
-            args.d_model,
-            args.n_heads,
-            args.e_layers,
-            args.d_layers,
-            args.d_ff,
-            args.factor,
-            args.embed,
-            args.distil,
-            args.des, ii)
+    # setting record of experiments
+    setting = '{}_{}_{}_ft{}_sl{}_ll{}_pl{}_dm{}_nh{}_el{}_dl{}_df{}_fc{}_eb{}_dt{}_{}_ts{}_{}'.format(
+        args.model_id,
+        args.model,
+        args.data,
+        args.features,
+        args.seq_len,
+        args.label_len,
+        args.pred_len,
+        args.d_model,
+        args.n_heads,
+        args.e_layers,
+        args.d_layers,
+        args.d_ff,
+        args.factor,
+        args.embed,
+        args.distil,
+        args.des,
+        args.train_split, args.exp_id)
 
-        exp = Exp(args)  # set experiments
-        print('====> training : {}'.format(setting))
-        exp.train(setting)
+    exp = Exp(args)  # set experiments
+    print('====> training : {}'.format(setting))
+    exp.train(setting)
 
-        print('====> testing : {}'.format(setting))
-        exp.test(setting)
+    print('====> testing : {}'.format(setting))
+    exp.test(setting)
 
-        # if args.do_predict:
-        #     print('>>>>>>>predicting : {}<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<'.format(setting))
-        #     exp.predict(setting, True)
+    # if args.do_predict:
+    #     print('>>>>>>>predicting : {}<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<'.format(setting))
+    #     exp.predict(setting, True)
 
-        torch.cuda.empty_cache()
+    torch.cuda.empty_cache()
 else:
     raise NotImplementedError
